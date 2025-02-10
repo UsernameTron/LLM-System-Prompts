@@ -39,6 +39,8 @@ def update_metrics_history(metrics: PromptMetrics, model: str, submodel: str):
     })
 
 # Main UI
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+
 st.title('AI System Prompt Generator')
 st.markdown('''
 Generate optimized system prompts for various AI models.
@@ -48,17 +50,32 @@ Choose your model and customize the prompt with additional context.
 # Initialize prompt processor
 processor = get_prompt_processor()
 
-# Sidebar for configurations
-with st.sidebar:
+# Check if we're on mobile
+is_mobile = st.query_params.get('embed', '') == 'true'
+
+# Model Configuration - Show in main content on mobile, sidebar on desktop
+config_container = st if is_mobile else st.sidebar
+
+with config_container:
     st.header('Model Configuration')
     
-    # Model Selection
+    # Model Selection with increased height for mobile touch
     models = processor.get_models()
-    selected_model = st.selectbox('Select AI Model', models)
+    selected_model = st.selectbox(
+        'Select AI Model',
+        models,
+        key='model_select',
+        help='Tap to select an AI model',
+    )
     
-    # Dynamic Submodel Selection
+    # Dynamic Submodel Selection with increased height for mobile touch
     submodels = processor.get_submodels(selected_model)
-    selected_submodel = st.selectbox('Select Submodel', submodels) if submodels else None
+    selected_submodel = st.selectbox(
+        'Select Submodel',
+        submodels,
+        key='submodel_select',
+        help='Tap to select a submodel (if available)',
+    ) if submodels else None
     
     # Display metrics history
     if st.session_state.metrics_history:
@@ -70,26 +87,51 @@ with st.sidebar:
         if len(df) > 1:
             st.line_chart(df.set_index('timestamp')['response_time_ms'])
 
-# Main content area
-col1, col2 = st.columns([2, 1])
-
-with col1:
+# Main content area - Adjust layout based on device
+if is_mobile:
+    # Single column layout for mobile
     st.header('Additional Context')
     context = st.text_area(
         'Add specific details or requirements (optional):',
         help='Provide additional context or specific requirements for your prompt.',
-        max_chars=1000
+        max_chars=1000,
+        height=150  # Smaller height on mobile
     )
-
-with col2:
-    st.header('Configuration')
+    
+    st.header('Selected Configuration')
     st.markdown(f'''
     - **Model**: {selected_model}
     - **Submodel**: {selected_submodel if selected_submodel else 'N/A'}
     ''')
+else:
+    # Two column layout for desktop
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.header('Additional Context')
+        context = st.text_area(
+            'Add specific details or requirements (optional):',
+            help='Provide additional context or specific requirements for your prompt.',
+            max_chars=1000
+        )
+    
+    with col2:
+        st.header('Configuration')
+        st.markdown(f'''
+        - **Model**: {selected_model}
+        - **Submodel**: {selected_submodel if selected_submodel else 'N/A'}
+        ''')
 
-# Generate prompt
-if st.button('Generate System Prompt', type='primary'):
+# Generate prompt button - Make it more prominent on mobile
+button_style = """<style>
+    .stButton>button {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.2rem;
+    }
+</style>"""
+st.markdown(button_style, unsafe_allow_html=True)
+
+if st.button('Generate System Prompt', type='primary', use_container_width=True):
     with st.spinner('Generating optimized system prompt...'):
         # Sanitize user input
         sanitized_context = processor.sanitize_input(context) if context else None
@@ -104,17 +146,32 @@ if st.button('Generate System Prompt', type='primary'):
         if prompt:
             # Update and display metrics
             update_metrics_history(metrics, selected_model, selected_submodel)
-            display_metrics(metrics)
+            
+            # Display metrics in a more mobile-friendly way
+            if is_mobile:
+                st.header('Performance Metrics')
+                metrics_cols = st.columns(2)
+                with metrics_cols[0]:
+                    st.metric('Response Time', f'{metrics.retrieval_time*1000:.1f}ms')
+                    st.metric('Has Structure', '✅' if metrics.has_structure else '❌')
+                with metrics_cols[1]:
+                    st.metric('Prompt Length', metrics.prompt_length)
+                    st.metric('Has Actions', '✅' if metrics.has_actions else '❌')
+            else:
+                display_metrics(metrics)
             
             # Display the generated prompt
             st.header('Generated System Prompt')
-            st.text_area('Prompt', prompt, height=300)
             
-            # Add copy button
+            # Adjust text area height based on device
+            prompt_height = 150 if is_mobile else 300
+            st.text_area('Prompt', prompt, height=prompt_height)
+            
+            # Add copy button with mobile-friendly styling
             st.code(prompt, language='text')
             
             # Warning if prompt doesn't meet quality standards
             if not metrics.has_structure or not metrics.has_actions:
-                st.warning('⚠️ The generated prompt may lack proper structure or specific actions. Consider adding more context to improve the output.')
+                st.warning('⚠️ The prompt may need improvement. Try adding more context.')
         else:
-            st.error('Error: Could not generate prompt for the selected model. Please try different options.')
+            st.error('Could not generate prompt. Please try different options.')
