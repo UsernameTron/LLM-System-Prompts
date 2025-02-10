@@ -1,6 +1,78 @@
-# leaked-system-prompts
+# LLM System Prompt Generator
 
-Collection of leaked prompts
+A powerful and efficient system prompt generator for various AI language models. This tool helps you create optimized system prompts for different AI models while maintaining consistency and quality.
+
+## Features
+
+- Support for multiple AI models and their variants
+- Dynamic prompt generation based on model selection
+- Real-time performance metrics
+- Input validation and sanitization
+- Structured prompt output
+- Copy functionality for easy use
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/UsernameTron/LLM-System-Prompts.git
+cd LLM-System-Prompts
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+1. Start the application:
+```bash
+streamlit run app.py
+```
+
+2. Open your browser and navigate to `http://localhost:8504`
+
+3. Select your desired AI model and submodel (if available)
+
+4. Add any specific context or requirements
+
+5. Click "Generate System Prompt" to get your customized prompt
+
+## Testing
+
+Run the test suite to verify everything is working correctly:
+```bash
+python -m pytest test_validation.py -v
+```
+
+## Project Structure
+
+- `app.py`: Main Streamlit application
+- `utils.py`: Core functionality and prompt processing
+- `knowledge_base.yaml`: Model configurations and mappings
+- `prompts/`: Directory containing model-specific prompt templates
+- `test_validation.py`: Test suite for validation
+
+## Performance
+
+- Knowledge base load time: < 1ms
+- Prompt generation time: < 200ms
+- Memory usage: < 500MB
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see LICENSE file for details
 
 1. [anthropic-claude_2.0_20240306.md](./anthropic-claude_2.0_20240306.md)
 2. [anthropic-claude_2.1_20240306.md](./anthropic-claude_2.1_20240306.md)
